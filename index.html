@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎄 聖誕快樂聊天室 🎄</title>
+    <style>
+        /* --- Google 字體 --- */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Mountains+of+Christmas:wght@700&display=swap');
+
+        /* --- 整體風格 --- */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0a192f; /* 深藍色，像冬夜 */
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden; /* 隱藏滾動條，讓雪花效果更好 */
+        }
+
+        /* --- 聊天室容器 --- */
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 85vh;
+            background: rgba(13, 36, 66, 0.85); /* 半透明深藍背景 */
+            border: 2px solid #c82a36; /* 聖誕紅邊框 */
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(5px); /* 毛玻璃效果 */
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- 聊天室標題 --- */
+        .chat-header {
+            background-color: #c82a36; /* 聖誕紅 */
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-family: 'Mountains of Christmas', cursive;
+            font-size: 2.5em;
+            letter-spacing: 3px;
+            border-bottom: 2px solid #b22222;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* --- 訊息顯示區域 --- */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 訊息滾動條美化 */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: #1e3a5f;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: #c82a36;
+            border-radius: 4px;
+        }
+
+        /* --- 單一訊息樣式 --- */
+        .message {
+            background-color: #1e7e34; /* 聖誕綠 */
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+            max-width: 80%;
+            align-self: flex-start;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .message .meta {
+            font-size: 0.8em;
+            color: #ffc107; /* 金色 */
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .message .meta .time {
+            font-weight: normal;
+            color: #ddd;
+            margin-left: 10px;
+        }
+
+        .message .text {
+            font-size: 1em;
+            word-wrap: break-word;
+        }
+
+        /* --- 輸入區域 --- */
+        .chat-input-form {
+            display: flex;
+            padding: 15px;
+            background-color: rgba(10, 25, 47, 0.9);
+            border-top: 2px solid #b22222;
+        }
+
+        .chat-input-form input {
+            flex-grow: 1;
+            border: 2px solid #28a745; /* 聖誕綠 */
+            background-color: #0a192f;
+            color: #fff;
+            padding: 12px;
+            border-radius: 20px;
+            margin-right: 10px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .chat-input-form input:focus {
+            border-color: #ffc107; /* 金色 */
+        }
+
+        .chat-input-form button {
+            background-color: #28a745; /* 聖誕綠 */
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .chat-input-form button:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        
+        /* --- 訊息淡入動畫 --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 雪花背景動畫 --- */
+        .snowflake {
+            color: #fff;
+            font-size: 1em;
+            font-family: Arial, sans-serif;
+            text-shadow: 0 0 5px #000;
+            position: fixed;
+            top: -10%;
+            z-index: 1;
+            user-select: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(105vh) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 聊天室主體結構 -->
+    <div class="chat-container">
+        <header class="chat-header">
+            Merry Christmas! 🎅
+        </header>
+        <main class="chat-messages" id="chat-messages">
+            <!-- 聊天訊息會顯示在這裡 -->
+        </main>
+        <form class="chat-input-form" id="chat-form">
+            <input type="text" id="username" placeholder="你的名字..." required>
+            <input type="text" id="msg" placeholder="輸入訊息..." required autocomplete="off">
+            <button type="submit">送出</button>
+        </form>
+    </div>
+
+    <script>
+        // --- 元素選取 ---
+        const chatForm = document.getElementById('chat-form');
+        const chatMessages = document.getElementById('chat-messages');
+        const usernameInput = document.getElementById('username');
+        const msgInput = document.getElementById('msg');
+
+        // --- 監聽表單提交事件 ---
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // 防止表單提交導致頁面刷新
+
+            const username = usernameInput.value.trim();
+            const msg = msgInput.value.trim();
+
+            if (!username || !msg) {
+                alert('名字和訊息不能為空喔！');
+                return;
+            }
+
+            // 建立並顯示訊息
+            outputMessage(username, msg);
+
+            // 清空輸入框並保持焦點
+            msgInput.value = '';
+            msgInput.focus();
+        });
+
+        // --- 顯示訊息到畫面上 ---
+        function outputMessage(username, text) {
+            const div = document.createElement('div');
+            div.classList.add('message');
+
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+            // 使用聖誕節相關的 emoji 增加趣味
+            const icons = ['🎄', '🎁', '🌟', '🔔', '🦌'];
+            const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+
+            div.innerHTML = `
+                <p class="meta">${randomIcon} ${username} <span class="time">${timeString}</span></p>
+                <p class="text">${text}</p>
+            `;
+            chatMessages.appendChild(div);
+
+            // 自動滾動到最新的訊息
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // --- 雪花效果 ---
+        function createSnowflakes() {
+            const snowflakeCount = 100;
+            const body = document.querySelector('body');
+
+            for (let i = 0; i < snowflakeCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
+                snowflake.textContent = '❄';
+                
+                // 隨機化雪花的屬性
+                snowflake.style.left = Math.random() * 100 + 'vw';
+                snowflake.style.animationDuration = (Math.random() * 5 + 5) + 's'; // 5-10秒
+                snowflake.style.animationDelay = Math.random() * 5 + 's';
+                snowflake.style.opacity = Math.random();
+                snowflake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+
+                body.appendChild(snowflake);
+            }
+        }
+
+        // 頁面載入時，產生雪花並顯示一則歡迎訊息
+        window.onload = () => {
+            createSnowflakes();
+            outputMessage('聖誕老人', 'Ho Ho Ho! 歡迎來到聖誕聊天室！想跟誰聊聊呢？');
+        };
+    </script>
+
+</body>
+</html>
