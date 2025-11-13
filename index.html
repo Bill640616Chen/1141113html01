@@ -269,7 +269,12 @@
                 return;
             }
             // 建立並顯示訊息
-            outputMessage(username, msg);
+            outputMessage(username, msg, 'user');
+
+            // 觸發機器人回覆
+            setTimeout(() => {
+                botResponse(msg);
+            }, Math.random() * 1000 + 500); // 模擬思考延遲 0.5~1.5 秒
 
             // 清空輸入框並保持焦點
             msgInput.value = '';
@@ -290,7 +295,7 @@
             const icons = ['🎄', '🎁', '🌟', '🔔', '🦌'];
             const randomIcon = icons[Math.floor(Math.random() * icons.length)];
 
-            if (type === 'user') {
+            if (type === 'user' || type === 'bot') {
                 // 關鍵字效果處理
                 if (text.includes('聖誕快樂') || text.toLowerCase().includes('merry christmas')) {
                     div.classList.add('highlight');
@@ -298,8 +303,13 @@
                 // Emoji 放大效果
                 messageText = text.replace(/🎅|🎄|🎁|🌟|🔔|🦌/g, '<span class="big-emoji">$&</span>');
 
+                let metaIcon = randomIcon;
+                if (type === 'bot') {
+                    div.style.backgroundColor = '#2a9d8f'; // 給機器人一個不同的顏色
+                    metaIcon = '🤖';
+                }
                 div.innerHTML = `
-                    <p class="meta">${randomIcon} ${username} <span class="time">${timeString}</span></p>
+                    <p class="meta">${metaIcon} ${username} <span class="time">${timeString}</span></p>
                     <p class="text">${messageText}</p>
                 `;
             } else if (type === 'system') {
@@ -311,6 +321,49 @@
 
             // 自動滾動到最新的訊息
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // --- 機器人回覆邏輯 ---
+        const botReplies = {
+            greetings: ['你好呀！很高興在聖誕節前夕見到你！', '哈囉！有什麼我可以幫忙的嗎？', '嗨！準備好迎接聖誕節了嗎？'],
+            weather: ['這裡的冬天總是下著雪，充滿了聖誕氣氛！', '聽說聖誕老人那邊的天氣很好，很適合駕著雪橇出發！', '不管外面天氣如何，心裡暖暖的就好！'],
+            gifts: ['我最想要的禮物是大家的笑容！', '聽說聖誕老人正在準備一份超棒的禮物給你喔！', '最好的禮物，是和家人朋友在一起的時光。', '你猜猜我的禮物是什麼？是更多的程式碼！哈哈！'],
+            santa: ['聖誕老人正在他的工作室裡忙著呢！', '噓... 我不能透露太多聖誕老人的行蹤！', '聖誕老人說，乖孩子才會有禮物喔！你今年乖嗎？'],
+            jokes: ['為什麼聖誕老人從煙囪進來？因為門鈴壞了！', '聖誕樹為什麼去看醫生？因為它的松果體發炎了！', '哪一種鹿會飛？所有聖誕老人的馴鹿都會！'],
+            feeling_happy: ['太棒了！聽到你開心，我也跟著開心起來！', '保持這份好心情，聖誕節會更快樂！', '你的快樂就像星星，點亮了整個夜空！'],
+            feeling_sad: ['怎麼啦？可以跟我說說，也許我能幫你想想辦法。', '別難過，聖誕節快到了，一切都會好起來的！', '給你一個溫暖的虛擬擁抱！'],
+            farewell: ['要離開了嗎？祝你有個美好的一天！', '再見！記得回來看看喔！', 'Bye bye! Merry Christmas!'],
+            default: ['嗯... 這個問題有點深奧，讓我想想。', '哈哈，你說的真有趣！', '關於這點，聖誕老人可能有不同的看法。', '我正在學習更多東西，下次也許就能回答你了！', '換個話題怎麼樣？你喜歡聖誕歌曲嗎？']
+        };
+
+        const keywords = {
+            greetings: ['你好', '哈囉', '嗨', '安安', 'hello', 'hi'],
+            weather: ['天氣', '冷嗎', '熱嗎', '下雪'],
+            gifts: ['禮物', '送我', '想要什麼'],
+            santa: ['聖誕老人', '老公公', 'santa'],
+            jokes: ['笑話', '好笑的'],
+            feeling_happy: ['開心', '高興', '快樂', '太棒了', 'happy'],
+            feeling_sad: ['難過', '傷心', '不開心', 'sad'],
+            farewell: ['再見', '掰掰', 'bye']
+        };
+
+        function botResponse(userInput) {
+            const lowerCaseInput = userInput.toLowerCase();
+            let replyCategory = 'default'; // 預設分類
+
+            // 遍歷關鍵字，尋找匹配
+            for (const category in keywords) {
+                if (keywords[category].some(keyword => lowerCaseInput.includes(keyword))) {
+                    replyCategory = category;
+                    break; // 找到第一個匹配的分類就跳出
+                }
+            }
+
+            // 從對應的分類中隨機選取一句回覆
+            const replies = botReplies[replyCategory];
+            const reply = replies[Math.floor(Math.random() * replies.length)];
+
+            outputMessage('聖誕小精靈', reply, 'bot');
         }
 
         // --- 處理特殊指令 ---
@@ -414,7 +467,8 @@
         // 頁面載入時，產生雪花並顯示一則歡迎訊息
         window.onload = () => {
             createSnowflakes();
-            outputMessage('聖誕老人', 'Ho Ho Ho! 歡迎來到聖誕聊天室！想跟誰聊聊呢？');
+            outputMessage('聖誕老人', 'Ho Ho Ho! 歡迎來到聖誕聊天室！');
+            setTimeout(() => outputMessage('聖誕小精靈', '你可以跟我聊聊天，或輸入 /help 看看有什麼好玩的指令喔！', 'bot'), 1000);
         };
     </script>
 
