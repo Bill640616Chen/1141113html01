@@ -102,6 +102,25 @@
             word-wrap: break-word;
         }
 
+        /* --- 特殊訊息樣式 --- */
+        .message.system {
+            background-color: #ffc107; /* 金色 */
+            color: #333;
+            font-style: italic;
+            align-self: center;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .message.highlight {
+            animation: glow 1.5s infinite alternate;
+            border: 1px solid #ffc107;
+        }
+
+        .message .text .big-emoji {
+            font-size: 1.8em;
+            vertical-align: middle;
+        }
         /* --- 輸入區域 --- */
         .chat-input-form {
             display: flex;
@@ -150,6 +169,24 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes glow {
+            from { box-shadow: 0 0 5px #ffc107, 0 0 10px #ffc107; }
+            to { box-shadow: 0 0 20px #ffc107, 0 0 30px #ffc107; }
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .shake-animation {
+            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
         /* --- 雪花背景動畫 --- */
         .snowflake {
             color: #fff;
@@ -166,6 +203,25 @@
         @keyframes fall {
             0% { transform: translateY(0) rotate(0deg); }
             100% { transform: translateY(105vh) rotate(360deg); }
+        }
+
+        /* --- 五彩紙屑動畫 --- */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0.7;
+            animation: fall 3s linear forwards;
+            z-index: 20;
+            top: -20px;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(90vh) rotate(360deg);
+                opacity: 0;
+            }
         }
     </style>
 </head>
@@ -188,6 +244,7 @@
 
     <script>
         // --- 元素選取 ---
+        const chatContainer = document.querySelector('.chat-container');
         const chatForm = document.getElementById('chat-form');
         const chatMessages = document.getElementById('chat-messages');
         const usernameInput = document.getElementById('username');
@@ -205,6 +262,12 @@
                 return;
             }
 
+            // 檢查是否為特殊指令
+            if (msg.startsWith('/')) {
+                handleCommand(msg);
+                msgInput.value = '';
+                return;
+            }
             // 建立並顯示訊息
             outputMessage(username, msg);
 
@@ -214,9 +277,11 @@
         });
 
         // --- 顯示訊息到畫面上 ---
-        function outputMessage(username, text) {
+        function outputMessage(username, text, type = 'user') {
             const div = document.createElement('div');
             div.classList.add('message');
+            
+            let messageText = text;
 
             const now = new Date();
             const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
@@ -225,14 +290,104 @@
             const icons = ['🎄', '🎁', '🌟', '🔔', '🦌'];
             const randomIcon = icons[Math.floor(Math.random() * icons.length)];
 
-            div.innerHTML = `
-                <p class="meta">${randomIcon} ${username} <span class="time">${timeString}</span></p>
-                <p class="text">${text}</p>
-            `;
+            if (type === 'user') {
+                // 關鍵字效果處理
+                if (text.includes('聖誕快樂') || text.toLowerCase().includes('merry christmas')) {
+                    div.classList.add('highlight');
+                }
+                // Emoji 放大效果
+                messageText = text.replace(/🎅|🎄|🎁|🌟|🔔|🦌/g, '<span class="big-emoji">$&</span>');
+
+                div.innerHTML = `
+                    <p class="meta">${randomIcon} ${username} <span class="time">${timeString}</span></p>
+                    <p class="text">${messageText}</p>
+                `;
+            } else if (type === 'system') {
+                div.classList.add('system');
+                div.innerHTML = `<p class="text">${text}</p>`;
+            }
+
             chatMessages.appendChild(div);
 
             // 自動滾動到最新的訊息
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // --- 處理特殊指令 ---
+        function handleCommand(command) {
+            const parts = command.split(' ');
+            const cmd = parts[0].toLowerCase();
+            const args = parts.slice(1);
+
+            switch (cmd) {
+                case '/help':
+                    const helpText = `
+                        可用指令: <br>
+                        /help - 顯示此幫助訊息 <br>
+                        /shake - 搖晃聊天室 <br>
+                        /confetti - 灑下五彩紙屑 <br>
+                        /changename [新名字] - 更換你的名字 <br>
+                        /random - 傳送隨機聖誕祝福
+                    `;
+                    outputMessage('系統', helpText, 'system');
+                    break;
+
+                case '/shake':
+                    chatContainer.classList.add('shake-animation');
+                    setTimeout(() => {
+                        chatContainer.classList.remove('shake-animation');
+                    }, 820);
+                    break;
+
+                case '/confetti':
+                    createConfetti();
+                    outputMessage('系統', '🎉🎉🎉', 'system');
+                    break;
+
+                case '/changename':
+                    if (args.length > 0) {
+                        const oldName = usernameInput.value;
+                        const newName = args.join(' ');
+                        usernameInput.value = newName;
+                        outputMessage('系統', `"${oldName}" 將名字改成了 "${newName}"`, 'system');
+                    } else {
+                        outputMessage('系統', '請輸入新名字: /changename [新名字]', 'system');
+                    }
+                    break;
+
+                case '/random':
+                    const greetings = [
+                        '願你的聖誕充滿溫暖、喜悅和歡笑！',
+                        '聖誕快樂，新年快樂！',
+                        '叮叮噹，叮叮噹，鈴聲多響亮！',
+                        '送你一棵裝滿禮物的聖誕樹！🎄',
+                        '願聖誕的魔法充滿你的心房。'
+                    ];
+                    const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+                    outputMessage(usernameInput.value, randomGreeting);
+                    break;
+
+                default:
+                    outputMessage('系統', `未知的指令: "${cmd}"。 輸入 /help 查看可用指令。`, 'system');
+                    break;
+            }
+        }
+
+        // --- 五彩紙屑效果 ---
+        function createConfetti() {
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                chatContainer.appendChild(confetti);
+
+                // 動畫結束後移除元素
+                setTimeout(() => confetti.remove(), 3000);
+            }
         }
 
         // --- 雪花效果 ---
